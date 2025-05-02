@@ -2,8 +2,8 @@ name: Study Environment Prediction
 
 on:
   schedule:
-    # Run every 15 minutes
-    - cron: '*/15 * * * *'
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
