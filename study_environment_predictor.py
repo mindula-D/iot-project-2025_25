@@ -241,11 +241,11 @@ def predict_future(model, last_sequence, scaler, feature_names, num_steps=PREDIC
 
 # Save predictions to MongoDB
 def save_predictions_to_mongodb(predictions_df, prediction_collection):
-    # Add timestamps to predictions
+    # Add metadata for predictions
     start_time = datetime.now()
     predictions_df['predicted_at'] = start_time
     
-    # Add timestamps for each predicted point (5-minute intervals)
+    # Generate timestamps for each predicted point (5-minute intervals)
     timestamps = []
     for i in range(len(predictions_df)):
         timestamps.append(start_time + timedelta(minutes=5 * i))
@@ -257,13 +257,22 @@ def save_predictions_to_mongodb(predictions_df, prediction_collection):
     
     # Insert each prediction individually
     for record in records:
-        # Ensure MongoDB-compatible format
-        record['prediction_timestamp'] = record['prediction_timestamp']
-        record['predicted_at'] = record['predicted_at']
-        record['is_prediction'] = True  # Flag to distinguish from actual readings
+        # Create a MongoDB document with the required timestamp field
+        # This is the key fix - MongoDB requires a 'timestamp' field
+        document = {
+            'timestamp': record['prediction_timestamp'],  # Required field for your collection
+            'temperature': record['temperature'],
+            'humidity': record['humidity'],
+            'light_lux': record['light_lux'],
+            'sound_raw': record['sound_raw'],
+            'study_quality_score': record['study_quality_score'],
+            'predicted_at': record['predicted_at'],
+            'is_prediction': True,  # Flag to distinguish from actual readings
+            'deviceID': 'StudyEnvNode1'  # Same device ID as your actual readings
+        }
         
         # Add prediction document
-        prediction_collection.insert_one(record)
+        prediction_collection.insert_one(document)
     
     print(f"Saved {len(records)} prediction points to MongoDB")
 
